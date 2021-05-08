@@ -16,6 +16,7 @@ class FlappyGame extends BaseGame with TapDetector {
   Ground _ground;
   PipeGenerator _pipeGenerator;
   StreamSubscription<SpriteComponent> _pipesSubscription;
+  int score;
   var isTaped = false;
 
   void getPipes() {
@@ -29,6 +30,8 @@ class FlappyGame extends BaseGame with TapDetector {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
+    score = 0;
+
     final blanchonImage = await images.load('blanchon.png');
     final blanchonSize = Vector2(64, 64);
     final bgImage = await images.load('bg.png');
@@ -89,7 +92,9 @@ class FlappyGame extends BaseGame with TapDetector {
 
       _blanchon.fall();
       _pipeGenerator.updatePipes();
-      this.checkCollision();
+      checkCollision();
+      updateScore();
+      print(score.toString());
     }
     super.update(dt);
   }
@@ -97,8 +102,23 @@ class FlappyGame extends BaseGame with TapDetector {
   void checkCollision() {
     // blanchon/ground collision
     if ((_blanchon.bottomYPosition) > _ground.topYPosition ||
-        isBlanchonHitingPipes(_blanchon, _pipeGenerator.getPipes)) {
+        isBlanchonHitingPipes()) {
       handleEndGame();
+    }
+  }
+
+  void updateScore() {
+    final pipes = _pipeGenerator.getPipes;
+    final blanchonRect = _blanchon.spriteToCollisionRect();
+
+    // we iterate with an offset of 2 because pipe comes by two
+    // the score is update if blanchon pass 2 pipe (bottom-pipe and top-pipe)
+    for (var i = 0; i < pipes.length; i += 2) {
+      if (!pipes[i].isBlanchonBehing &&
+          blanchonRect.left > pipes[i].spriteToCollisionRect().right) {
+        pipes[i].blanchonPassThePipe();
+        score++;
+      }
     }
   }
 
@@ -115,9 +135,10 @@ class FlappyGame extends BaseGame with TapDetector {
     super.render(canvas);
   }
 
-  bool isBlanchonHitingPipes(Blanchon blanchon, List<Pipe> pipes) {
+  bool isBlanchonHitingPipes() {
     var isCollision = false;
-    final blanchonRect = blanchon.spriteToCollisionRect();
+    final pipes = _pipeGenerator.getPipes;
+    final blanchonRect = _blanchon.spriteToCollisionRect();
 
     pipes.forEach((pipeSprite) {
       final pipeRect = pipeSprite.spriteToCollisionRect();
