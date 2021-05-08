@@ -5,12 +5,13 @@ import 'package:flame/gestures.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'component/index.dart';
 
-class MyGame extends BaseGame with TapDetector {
+class FlappyGame extends BaseGame with TapDetector {
   GameState gameState = GameState.Stagging;
-  SpriteComponent blanchon;
-  SpriteComponent bg;
-  SpriteComponent ground;
+  Blanchon blanchon;
+  Bg bg;
+  Ground ground;
   var isTaped = false;
 
   @override
@@ -23,13 +24,15 @@ class MyGame extends BaseGame with TapDetector {
     final bgImage = await images.load('bg.png');
     final groundImage = await images.load('ground.png');
 
-    add(bg = SpriteComponent.fromImage(bgImage, size: Vector2(size.x, size.y)));
-    add(ground = SpriteComponent.fromImage(groundImage,
-        size: Vector2(size.x, 150), position: Vector2(0, (size.y - 150))));
-    add(
-      blanchon = SpriteComponent.fromImage(blanchonImage,
-          size: Vector2(64, 64), position: this.getDefaultBlanchonPosition),
-    );
+    blanchon = Blanchon(
+        blanchonImage, Vector2(64, 64), this.getDefaultBlanchonPosition);
+    bg = Bg(bgImage, Vector2(size.x, size.y));
+    ground =
+        Ground(groundImage, Vector2(size.x, 150), Vector2(0, (size.y - 150)));
+
+    add(bg.getSprite);
+    add(ground.getSprite);
+    add(blanchon.getSprite);
   }
 
   @override
@@ -43,7 +46,7 @@ class MyGame extends BaseGame with TapDetector {
         break;
       case GameState.DeadMenu:
         gameState = GameState.Stagging;
-        blanchon.position = this.getDefaultBlanchonPosition;
+        blanchon.reloadDefaultPosition();
         break;
       default:
         break;
@@ -55,16 +58,13 @@ class MyGame extends BaseGame with TapDetector {
   void update(double dt) {
     if (gameState == GameState.Playing) {
       if (isTaped) {
-        blanchon.addEffect(MoveEffect(
-          path: [Vector2(blanchon.position.x, (blanchon.position.y - 116))],
-          speed: 600.0,
-        ));
+        blanchon.flutter();
         // I really don't get how this one is supposed to work :/
         // blanchon.addEffect(RotateEffect(angle: 0.1, speed: 1));
         isTaped = false;
       }
 
-      blanchon.position.y += 6;
+      blanchon.fall();
       this.checkCollision();
     }
     super.update(dt);
@@ -72,7 +72,7 @@ class MyGame extends BaseGame with TapDetector {
 
   void checkCollision() {
     // blanchon/ground collision
-    if ((blanchon.position.y + blanchon.size.y) > ground.position.y) {
+    if ((blanchon.bottomYPosition) > ground.topYPosition) {
       print('Dead');
       gameState = GameState.DeadMenu;
     }
