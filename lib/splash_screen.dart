@@ -1,7 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flame_splash_screen/flame_splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'game.dart';
+import 'core/game.dart';
 
 class SplashScreenGame extends StatelessWidget {
   @override

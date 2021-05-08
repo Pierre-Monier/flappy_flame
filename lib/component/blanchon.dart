@@ -8,17 +8,19 @@ class Blanchon extends GameComponent {
   Vector2 _defaultPosition;
 
   Blanchon(Image image, Vector2 size, Vector2 position) {
-    _defaultPosition = position;
+    // we create a new Vector2 to avoid object reference issues
+    _defaultPosition = Vector2(position.x, position.y);
     sprite = SpriteComponent.fromImage(image, size: size, position: position);
   }
 
   void reloadDefaultPosition() {
-    sprite.position = _defaultPosition;
+    // we create a new Vector2 to avoid object reference issues
+    sprite.position = Vector2(_defaultPosition.x, _defaultPosition.y);
   }
 
   void flutter() {
     sprite.addEffect(MoveEffect(
-      path: [Vector2(sprite.position.x, (sprite.position.y - 116))],
+      path: [Vector2(sprite.position.x, (sprite.position.y - 110))],
       speed: 600.0,
     ));
   }
