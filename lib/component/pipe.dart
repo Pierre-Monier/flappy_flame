@@ -6,14 +6,19 @@ import './game_component.dart';
 import 'package:flame/game.dart';
 
 class Pipe extends GameComponent {
-  bool isBlanchonBehing;
+  bool _isBlanchonBehing;
+  bool _isATopPipe;
 
-  Pipe(Image image, Vector2 size, Vector2 position) {
-    isBlanchonBehing = false;
+  Pipe(Image image, Vector2 size, Vector2 position, bool isATopPipe) {
+    _isBlanchonBehing = false;
+    _isATopPipe = isATopPipe;
     sprite = SpriteComponent.fromImage(image, size: size, position: position);
   }
 
   void blanchonPassThePipe() {
-    isBlanchonBehing = true;
+    _isBlanchonBehing = true;
   }
+
+  bool get isBlanchonBehing => _isBlanchonBehing;
+  bool get isATopPipe => _isATopPipe;
 }

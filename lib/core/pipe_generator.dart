@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:async';
+import 'dart:math';
 import 'package:flame/components.dart' hide Timer;
 import 'package:flappy_blanchon/component/pipe.dart';
 import '../component/pipe.dart';
@@ -11,6 +12,7 @@ class PipeGenerator {
   Vector2 _bottomPipePosition;
   double _gapSize;
   List<Pipe> _pipes;
+  static const MIN_PIPE_HEIGHT = 100;
 
   PipeGenerator(Image topPipeImage, Image bottomPipeImage,
       Vector2 topPipePosition, Vector2 bottomPipePosition, double gapSize) {
@@ -34,16 +36,19 @@ class PipeGenerator {
     final interval = Duration(seconds: 2);
 
     void tick(_) {
-      final topPipeSize = Vector2(64, _bottomPipePosition.y / 2);
-      final bottomPipeSize = Vector2(64, _bottomPipePosition.y / 2 - _gapSize);
+      final pipesHeight = _getPipesHeight();
+
+      final topPipeSize = Vector2(64, pipesHeight.topPipeHeight);
+      final bottomPipeSize = Vector2(64, pipesHeight.bottomPipeHeight);
+
       // create new Vector2 to avoid position issues
       final topPipePosition = Vector2(_topPipePosition.x, _topPipePosition.y);
       final bottomPipePosition = Vector2(
           _bottomPipePosition.x, (_bottomPipePosition.y - bottomPipeSize.y));
 
-      final topPipe = Pipe(_topPipeImage, topPipeSize, topPipePosition);
+      final topPipe = Pipe(_topPipeImage, topPipeSize, topPipePosition, true);
       final bottomPipe =
-          Pipe(_bottomPipeImage, bottomPipeSize, bottomPipePosition);
+          Pipe(_bottomPipeImage, bottomPipeSize, bottomPipePosition, false);
 
       _pipes.addAll([topPipe, bottomPipe]);
 
@@ -56,6 +61,7 @@ class PipeGenerator {
         timer.cancel();
         timer = null;
       }
+
       controller.close();
     }
 
@@ -85,8 +91,29 @@ class PipeGenerator {
     _pipes = newPipes.where((pipe) => pipe != null).toList();
   }
 
+  PipesHeight _getPipesHeight() {
+    final topPipeMaxHeight = _bottomPipePosition.y - MIN_PIPE_HEIGHT - _gapSize;
+    final topPipeHeight = _getRandomPipeHeight(topPipeMaxHeight.toInt());
+
+    final bottomPipeHeight = _bottomPipePosition.y - topPipeHeight - _gapSize;
+
+    return PipesHeight(topPipeHeight, bottomPipeHeight);
+  }
+
+  double _getRandomPipeHeight(int max) {
+    final _random = new Random();
+    return MIN_PIPE_HEIGHT + _random.nextInt(max - MIN_PIPE_HEIGHT).toDouble();
+  }
+
   List<Pipe> get getPipes => _pipes;
 
   List<SpriteComponent> get getPipesSprites =>
       _pipes.map((pipe) => pipe.sprite).toList();
+}
+
+class PipesHeight {
+  double topPipeHeight;
+  double bottomPipeHeight;
+
+  PipesHeight(this.topPipeHeight, this.bottomPipeHeight);
 }
