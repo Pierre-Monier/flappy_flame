@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flame/effects.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/gestures.dart';
-import 'package:flame/components.dart';
+import 'package:flame/components.dart' hide Timer;
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:hive/hive.dart';
@@ -15,12 +15,6 @@ import 'score_sprite_generator.dart';
 enum GameState { Playing, Stagging, DeadMenu }
 
 class FlappyGame extends BaseGame with TapDetector {
-  static const COLLISION_SMOOTHER = {
-    'left': 5,
-    'top': 10,
-    'right': -5,
-    'bottom': -5
-  };
   static const BOX_KEY = 'flappy_blanchon';
   static const BEST_SCORE_KEY = 'best_score';
   GameState gameState = GameState.Stagging;
@@ -34,6 +28,7 @@ class FlappyGame extends BaseGame with TapDetector {
   // TODO create a BoxWrapper class
   Box _hiveBox;
   bool _isTaped;
+  bool _isStaggingReady;
 
   @override
   Future<void> onLoad() async {
@@ -41,6 +36,7 @@ class FlappyGame extends BaseGame with TapDetector {
       DeviceOrientation.portraitUp,
     ]);
     _isTaped = false;
+    _isStaggingReady = true;
 
     await Hive.initFlutter();
     _hiveBox = await Hive.openBox(BOX_KEY);
@@ -97,6 +93,7 @@ class FlappyGame extends BaseGame with TapDetector {
     add(_blanchon.getSprite);
 
     // Init displayed score
+    getDisplayedScore();
     _score = 0;
     _updateDisplayedScore();
   }
@@ -111,7 +108,9 @@ class FlappyGame extends BaseGame with TapDetector {
         _startGame();
         break;
       case GameState.DeadMenu:
-        _startStagging();
+        if (_isStaggingReady) {
+          _startStagging();
+        }
         break;
       default:
         break;
@@ -143,18 +142,43 @@ class FlappyGame extends BaseGame with TapDetector {
 
       _blanchon.fall();
       _pipeGenerator.updatePipes();
-      checkCollision();
+      _checkCollision();
       _updateScore();
     }
     super.update(dt);
   }
 
-  void checkCollision() {
-    if ((_blanchon.bottomYPosition) > _ground.topYPosition ||
-        _isBlanchonHitingPipes()) {
+  void _checkCollision() {
+    if (_isBlanchonHitingGround() || _isBlanchonHitingPipes()) {
       _handleBlanchonDeath();
     }
   }
+
+  bool _isBlanchonHitingGround() =>
+      (_blanchon.bottomYPosition > _ground.topYPosition);
+
+  bool _isBlanchonHitingPipes() {
+    var isCollision = false;
+    final pipesSprite = _pipeGenerator.getPipes;
+    final blanchonRect = _blanchon.spriteToCollisionRect();
+
+    for (final pipeSprite in pipesSprite) {
+      final pipeRect = pipeSprite.spriteToCollisionRect();
+
+      if (_isRectCollision(blanchonRect, pipeRect)) {
+        isCollision = true;
+        break;
+      }
+    }
+
+    return isCollision;
+  }
+
+  bool _isRectCollision(Rect rect1, Rect rect2) =>
+      (rect1.left < rect2.right + rect1.size.width / 2 &&
+          rect1.right > rect2.left + rect1.size.width / 2 &&
+          rect1.top < rect2.bottom + rect1.size.height / 2 &&
+          rect1.bottom > rect2.top + rect1.size.height / 2);
 
   void _updateScore() {
     final pipes = _pipeGenerator.getPipes;
@@ -176,13 +200,20 @@ class FlappyGame extends BaseGame with TapDetector {
   void _updateDisplayedScore() {
     removeAll(_scoreDisplayer.scoreElementSprites);
     _scoreDisplayer.updateScore(_score);
-    addAll(_scoreDisplayer.scoreElementSprites);
   }
 
   void _handleBlanchonDeath() {
+    _isStaggingReady = false;
+    final deathBlanchonYPosition =
+        _ground.topYPosition - _blanchon.sprite.size.y;
+    _blanchon.die(deathBlanchonYPosition);
     gameState = GameState.DeadMenu;
     _pipesSubscription.cancel();
     _updateBestScore();
+
+    Timer(Duration(seconds: 1), () {
+      _isStaggingReady = true;
+    });
   }
 
   void _updateBestScore() {
@@ -199,28 +230,11 @@ class FlappyGame extends BaseGame with TapDetector {
     });
   }
 
-  bool _isBlanchonHitingPipes() {
-    var isCollision = false;
-    final pipesSprite = _pipeGenerator.getPipes;
-    final blanchonRect = _blanchon.spriteToCollisionRect();
-
-    for (final pipeSprite in pipesSprite) {
-      final pipeRect = pipeSprite.spriteToCollisionRect();
-
-      if (_isRectCollision(blanchonRect, pipeRect)) {
-        isCollision = true;
-        break;
-      }
-    }
-
-    return isCollision;
+  void getDisplayedScore() {
+    _scoreDisplayer.getDisplayedScore().listen((scoreSprites) {
+      add(scoreSprites);
+    });
   }
-
-  bool _isRectCollision(Rect rect1, Rect rect2) =>
-      (rect1.left < rect2.right + COLLISION_SMOOTHER['right'] &&
-          rect1.right > rect2.left + COLLISION_SMOOTHER['left'] &&
-          rect1.top < rect2.bottom + COLLISION_SMOOTHER['bottom'] &&
-          rect1.bottom > rect2.top + COLLISION_SMOOTHER['top']);
 
   // TODO refacto in BoxWrapper
   int _getBestScore() {
