@@ -6,6 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/animation.dart';
 import 'game_component.dart';
+import 'priority_sprite_component.dart';
 
 class Blanchon extends GameComponent {
   Vector2 _defaultPosition;
@@ -18,7 +19,7 @@ class Blanchon extends GameComponent {
     _isFluttering = false;
     // we create a new Vector2 to avoid object reference issues
     _defaultPosition = Vector2(position.x, position.y);
-    sprite = SpriteComponent.fromImage(image, size: size, position: position);
+    sprite = PrioritySpriteComponent(1, image, size: size, position: position);
     sprite.anchor = Anchor.center;
   }
 

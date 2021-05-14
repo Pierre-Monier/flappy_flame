@@ -95,7 +95,6 @@ class FlappyGame extends BaseGame with TapDetector {
     // Init displayed score
     getDisplayedScore();
     _score = 0;
-    _updateDisplayedScore();
   }
 
   @override
@@ -120,6 +119,7 @@ class FlappyGame extends BaseGame with TapDetector {
   void _startGame() {
     gameState = GameState.Playing;
     getPipes();
+    _updateDisplayedScore(_score);
     _isTaped = true;
   }
 
@@ -129,7 +129,7 @@ class FlappyGame extends BaseGame with TapDetector {
     removeAll(_pipeGenerator.getPipesSprites);
     _pipeGenerator.cleanUpPipes();
     _score = 0;
-    _updateDisplayedScore();
+    removeAll(_scoreDisplayer.scoreElementSprites);
   }
 
   @override
@@ -150,7 +150,7 @@ class FlappyGame extends BaseGame with TapDetector {
 
   void _checkCollision() {
     if (_isBlanchonHitingGround() || _isBlanchonHitingPipes()) {
-      _handleBlanchonDeath();
+      _handleEndGame();
     }
   }
 
@@ -192,24 +192,36 @@ class FlappyGame extends BaseGame with TapDetector {
           blanchonRect.left > pipe.spriteToCollisionRect().right) {
         pipe.blanchonPassThePipe();
         _score++;
-        _updateDisplayedScore();
+        _updateDisplayedScore(_score);
       }
     });
   }
 
-  void _updateDisplayedScore() {
+  void _updateDisplayedScore(int score,
+      {double customYPosition, bool shouldCleanUp = true}) {
     removeAll(_scoreDisplayer.scoreElementSprites);
-    _scoreDisplayer.updateScore(_score);
+    _scoreDisplayer.generateScoreSprites(score,
+        customYPosition: customYPosition, shouldCleanUp: shouldCleanUp);
   }
 
-  void _handleBlanchonDeath() {
+  void _updateEndGameDisplayedScore() {
+    final bestScore = _getBestScore();
+
+    _updateDisplayedScore(_score, customYPosition: 250, shouldCleanUp: false);
+    _updateDisplayedScore(bestScore,
+        customYPosition: 350, shouldCleanUp: false);
+  }
+
+  void _handleEndGame() {
     _isStaggingReady = false;
     final deathBlanchonYPosition =
         _ground.topYPosition - _blanchon.sprite.size.y;
     _blanchon.die(deathBlanchonYPosition);
     gameState = GameState.DeadMenu;
     _pipesSubscription.cancel();
+    removeAll(_scoreDisplayer.scoreElementSprites);
     _updateBestScore();
+    _updateEndGameDisplayedScore();
 
     Timer(Duration(seconds: 1), () {
       _isStaggingReady = true;
