@@ -1,5 +1,5 @@
 export 'bg.dart';
-export 'blanchon.dart';
+export 'bird.dart';
 export 'ground.dart';
 export 'pipe.dart';
 export 'score_element.dart';

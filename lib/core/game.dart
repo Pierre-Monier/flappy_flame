@@ -18,7 +18,7 @@ class FlappyGame extends BaseGame with TapDetector {
   static const BOX_KEY = 'flappy_blanchon';
   static const BEST_SCORE_KEY = 'best_score';
   GameState gameState = GameState.Stagging;
-  Blanchon _blanchon;
+  Bird _bird;
   Bg _bg;
   Ground _ground;
   GameOver _gameOver;
@@ -87,7 +87,7 @@ class FlappyGame extends BaseGame with TapDetector {
         Vector2((size.x / 2), size.y / 10), scoreElementImages);
 
     // Init components
-    _blanchon = Blanchon(blanchonImage, blanchonSize, blanchonPosition);
+    _bird = Bird(blanchonImage, blanchonSize, blanchonPosition);
     _bg = Bg(bgImage, Vector2(size.x, size.y));
     _ground = Ground(
         groundImage, Vector2(size.x, 150), Vector2(0, (size.y - (size.y / 6))));
@@ -98,7 +98,9 @@ class FlappyGame extends BaseGame with TapDetector {
 
     add(_bg.getSprite);
     add(_ground.getSprite);
-    add(_blanchon.getSprite);
+    add(_bird.getSprite);
+
+    _bird.staggingAnimation();
 
     // Init displayed score
     getDisplayedScore();
@@ -128,13 +130,15 @@ class FlappyGame extends BaseGame with TapDetector {
     gameState = GameState.Playing;
     getPipes();
     _updateDisplayedScore(_score);
+    _bird.sprite.clearEffects();
     _isTaped = true;
   }
 
   void _startStagging() {
     gameState = GameState.Stagging;
 
-    _blanchon.reloadDefaultPosition();
+    _bird.reloadDefaultPosition();
+    _bird.staggingAnimation();
 
     removeAll(_pipeGenerator.getPipesSprites);
     _pipeGenerator.cleanUpPipes();
@@ -149,11 +153,11 @@ class FlappyGame extends BaseGame with TapDetector {
   void update(double dt) {
     if (gameState == GameState.Playing) {
       if (_isTaped) {
-        _blanchon.flutter();
+        _bird.flutter();
         _isTaped = false;
       }
 
-      _blanchon.fall();
+      _bird.fall();
       _pipeGenerator.updatePipes();
       _checkCollision();
       _updateScore();
@@ -168,12 +172,12 @@ class FlappyGame extends BaseGame with TapDetector {
   }
 
   bool _isBlanchonHitingGround() =>
-      (_blanchon.bottomYPosition > _ground.topYPosition);
+      (_bird.bottomYPosition > _ground.topYPosition);
 
   bool _isBlanchonHitingPipes() {
     var isCollision = false;
     final pipesSprite = _pipeGenerator.getPipes;
-    final blanchonRect = _blanchon.spriteToCollisionRect();
+    final blanchonRect = _bird.spriteToCollisionRect();
 
     for (final pipeSprite in pipesSprite) {
       final pipeRect = pipeSprite.spriteToCollisionRect();
@@ -195,7 +199,7 @@ class FlappyGame extends BaseGame with TapDetector {
 
   void _updateScore() {
     final pipes = _pipeGenerator.getPipes;
-    final blanchonRect = _blanchon.spriteToCollisionRect();
+    final blanchonRect = _bird.spriteToCollisionRect();
 
     // we check if pipe is a top pipe because we only want to update score
     // if blanchon pass 2 pipe (bottom-pipe and top-pipe), so we remove bottom from this equation
@@ -230,9 +234,8 @@ class FlappyGame extends BaseGame with TapDetector {
     _isStaggingReady = false;
     gameState = GameState.DeadMenu;
 
-    final deathBlanchonYPosition =
-        _ground.topYPosition - _blanchon.sprite.size.y;
-    _blanchon.die(deathBlanchonYPosition);
+    final deathBlanchonYPosition = _ground.topYPosition - _bird.sprite.size.y;
+    _bird.die(deathBlanchonYPosition);
 
     _pipesSubscription.cancel();
 

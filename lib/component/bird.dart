@@ -8,14 +8,15 @@ import 'package:flutter/animation.dart';
 import 'game_component.dart';
 import 'priority_sprite_component.dart';
 
-class Blanchon extends GameComponent {
+class Bird extends GameComponent {
   Vector2 _defaultPosition;
   bool _isFluttering;
   Timer _currentFlutteringTimer;
   // representing millisecond
   static const FLUTTERING_DELAY = 250;
+  static const STAGGING_ANIMATION_DELAY = 750;
 
-  Blanchon(Image image, Vector2 size, Vector2 position) {
+  Bird(Image image, Vector2 size, Vector2 position) {
     _isFluttering = false;
     // we create a new Vector2 to avoid object reference issues
     _defaultPosition = Vector2(position.x, position.y);
@@ -80,6 +81,20 @@ class Blanchon extends GameComponent {
     final combination = CombinedEffect(effects: [moveToGround, funkyRotation]);
 
     sprite.addEffect(combination);
+  }
+
+  void staggingAnimation() {
+    final staggingEffect = MoveEffect(
+        path: [
+          Vector2(sprite.position.x, sprite.position.y - 10),
+          Vector2(sprite.position.x, sprite.position.y + 10),
+          Vector2(sprite.position.x, sprite.position.y)
+        ],
+        duration: STAGGING_ANIMATION_DELAY / 1000,
+        curve: Curves.linear,
+        isInfinite: true);
+
+    sprite.addEffect(staggingEffect);
   }
 
   void _clearFlutteringTimer() {
