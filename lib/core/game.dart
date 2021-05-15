@@ -10,7 +10,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../component/index.dart';
 import './pipe_generator.dart';
-import 'score_sprite_generator.dart';
+import './score_sprite_generator.dart';
 
 enum GameState { Playing, Stagging, DeadMenu }
 
@@ -21,6 +21,8 @@ class FlappyGame extends BaseGame with TapDetector {
   Blanchon _blanchon;
   Bg _bg;
   Ground _ground;
+  GameOver _gameOver;
+  ScoreBoard _scoreBoard;
   ScoreSpriteGenerator _scoreDisplayer;
   PipeGenerator _pipeGenerator;
   StreamSubscription<SpriteComponent> _pipesSubscription;
@@ -42,7 +44,7 @@ class FlappyGame extends BaseGame with TapDetector {
     _hiveBox = await Hive.openBox(BOX_KEY);
 
     final topPipePosition = Vector2(size.x, 0);
-    final bottomPipePosition = Vector2(size.x, (size.y - 150));
+    final bottomPipePosition = Vector2(size.x, (size.y - (size.y / 6)));
     final blanchonPosition = Vector2((size.x / 2), (size.y / 2));
 
     // Loading all game images
@@ -51,6 +53,8 @@ class FlappyGame extends BaseGame with TapDetector {
     final groundImage = await images.load('ground.png');
     final topPipeImage = await images.load('top-pipe.png');
     final bottomPipeImage = await images.load('bottom-pipe.png');
+    final gameOverImage = await images.load('game_over.png');
+    final scoreBoardImage = await images.load('score_board.png');
     final image0 = await images.load('0.png');
     final image1 = await images.load('1.png');
     final image2 = await images.load('2.png');
@@ -79,14 +83,18 @@ class FlappyGame extends BaseGame with TapDetector {
     // Init core
     _pipeGenerator = PipeGenerator(topPipeImage, bottomPipeImage,
         topPipePosition, bottomPipePosition, blanchonSize.y * 3);
-    _scoreDisplayer =
-        ScoreSpriteGenerator(Vector2((size.x / 2), 50), scoreElementImages);
+    _scoreDisplayer = ScoreSpriteGenerator(
+        Vector2((size.x / 2), size.y / 10), scoreElementImages);
 
     // Init components
     _blanchon = Blanchon(blanchonImage, blanchonSize, blanchonPosition);
     _bg = Bg(bgImage, Vector2(size.x, size.y));
-    _ground =
-        Ground(groundImage, Vector2(size.x, 150), Vector2(0, (size.y - 150)));
+    _ground = Ground(
+        groundImage, Vector2(size.x, 150), Vector2(0, (size.y - (size.y / 6))));
+    _gameOver = GameOver(gameOverImage, Vector2((size.x / 3) * 2, size.y / 12),
+        Vector2(size.x / 2, size.y / 10));
+    _scoreBoard = ScoreBoard(scoreBoardImage, Vector2(size.x, size.x),
+        Vector2(size.x / 2, size.y / 2));
 
     add(_bg.getSprite);
     add(_ground.getSprite);
@@ -125,11 +133,16 @@ class FlappyGame extends BaseGame with TapDetector {
 
   void _startStagging() {
     gameState = GameState.Stagging;
+
     _blanchon.reloadDefaultPosition();
+
     removeAll(_pipeGenerator.getPipesSprites);
     _pipeGenerator.cleanUpPipes();
     _score = 0;
     removeAll(_scoreDisplayer.scoreElementSprites);
+
+    remove(_gameOver.sprite);
+    remove(_scoreBoard.sprite);
   }
 
   @override
@@ -207,21 +220,28 @@ class FlappyGame extends BaseGame with TapDetector {
   void _updateEndGameDisplayedScore() {
     final bestScore = _getBestScore();
 
-    _updateDisplayedScore(_score, customYPosition: 250, shouldCleanUp: false);
+    _updateDisplayedScore(_score,
+        customYPosition: _scoreBoard.scoreYPosition, shouldCleanUp: false);
     _updateDisplayedScore(bestScore,
-        customYPosition: 350, shouldCleanUp: false);
+        customYPosition: _scoreBoard.bestScoreYPosition, shouldCleanUp: false);
   }
 
   void _handleEndGame() {
     _isStaggingReady = false;
+    gameState = GameState.DeadMenu;
+
     final deathBlanchonYPosition =
         _ground.topYPosition - _blanchon.sprite.size.y;
     _blanchon.die(deathBlanchonYPosition);
-    gameState = GameState.DeadMenu;
+
     _pipesSubscription.cancel();
+
     removeAll(_scoreDisplayer.scoreElementSprites);
-    _updateBestScore();
     _updateEndGameDisplayedScore();
+    _updateBestScore();
+
+    add(_gameOver.sprite);
+    add(_scoreBoard.sprite);
 
     Timer(Duration(seconds: 1), () {
       _isStaggingReady = true;
