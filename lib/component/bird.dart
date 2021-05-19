@@ -5,10 +5,9 @@ import 'package:flame/components.dart' hide Timer;
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/animation.dart';
-import 'game_component.dart';
 import 'priority_sprite_component.dart';
 
-class Bird extends GameComponent {
+class Bird extends PrioritySpriteComponent {
   Vector2 _defaultPosition;
   bool _isFluttering;
   Timer _currentFlutteringTimer;
@@ -16,22 +15,22 @@ class Bird extends GameComponent {
   static const FLUTTERING_DELAY = 250;
   static const STAGGING_ANIMATION_DELAY = 750;
 
-  Bird(Image image, Vector2 size, Vector2 position) {
+  Bird(Image image, Vector2 size, Vector2 position)
+      : super(1, image, size: size, position: position) {
     _isFluttering = false;
     // we create a new Vector2 to avoid object reference issues
     _defaultPosition = Vector2(position.x, position.y);
-    sprite = PrioritySpriteComponent(1, image, size: size, position: position);
-    sprite.anchor = Anchor.center;
+    anchor = Anchor.center;
   }
 
   void reloadDefaultPosition() {
     // we create a new Vector2 to avoid object reference issues
-    sprite.position = Vector2(_defaultPosition.x, _defaultPosition.y);
+    position = Vector2(_defaultPosition.x, _defaultPosition.y);
 
     final defaultRotate =
         RotateEffect(angle: 0, duration: 0, curve: Curves.linear);
 
-    sprite.addEffect(defaultRotate);
+    addEffect(defaultRotate);
   }
 
   void flutter() {
@@ -39,7 +38,7 @@ class Bird extends GameComponent {
     _isFluttering = true;
 
     final moveUp = MoveEffect(
-        path: [Vector2(sprite.position.x, (sprite.position.y - 85))],
+        path: [Vector2(position.x, (position.y - 85))],
         duration: FLUTTERING_DELAY / 1000,
         curve: Curves.linear);
 
@@ -48,7 +47,7 @@ class Bird extends GameComponent {
 
     final flutterEffect = CombinedEffect(effects: [moveUp, rotateUp]);
 
-    sprite.addEffect(flutterEffect);
+    addEffect(flutterEffect);
     _currentFlutteringTimer = Timer(
         Duration(milliseconds: FLUTTERING_DELAY), () => _isFluttering = false);
   }
@@ -56,7 +55,7 @@ class Bird extends GameComponent {
   void fall() {
     if (!_isFluttering) {
       final moveDown = MoveEffect(
-          path: [Vector2(sprite.position.x, (sprite.position.y + 85))],
+          path: [Vector2(position.x, (position.y + 85))],
           duration: FLUTTERING_DELAY / 1000,
           curve: Curves.linear);
 
@@ -65,14 +64,14 @@ class Bird extends GameComponent {
 
       final fallEffect = CombinedEffect(effects: [moveDown, rotateDown]);
 
-      sprite.addEffect(fallEffect);
+      addEffect(fallEffect);
     }
   }
 
   void die(double groundTopPosition) {
-    final moveToGround = MoveEffect(path: [
-      Vector2(sprite.position.x, groundTopPosition + spriteHeight / 2)
-    ], duration: 0.5);
+    final moveToGround = MoveEffect(
+        path: [Vector2(position.x, groundTopPosition + spriteHeight / 2)],
+        duration: 0.5);
 
     // It might be optional if it looks weird with blanchon rotation
     final funkyRotation =
@@ -80,21 +79,21 @@ class Bird extends GameComponent {
 
     final combination = CombinedEffect(effects: [moveToGround, funkyRotation]);
 
-    sprite.addEffect(combination);
+    addEffect(combination);
   }
 
   void staggingAnimation() {
     final staggingEffect = MoveEffect(
         path: [
-          Vector2(sprite.position.x, sprite.position.y - 10),
-          Vector2(sprite.position.x, sprite.position.y + 10),
-          Vector2(sprite.position.x, sprite.position.y)
+          Vector2(position.x, position.y - 10),
+          Vector2(position.x, position.y + 10),
+          Vector2(position.x, position.y)
         ],
         duration: STAGGING_ANIMATION_DELAY / 1000,
         curve: Curves.linear,
         isInfinite: true);
 
-    sprite.addEffect(staggingEffect);
+    addEffect(staggingEffect);
   }
 
   void _clearFlutteringTimer() {
@@ -103,7 +102,7 @@ class Bird extends GameComponent {
     }
   }
 
-  double get bottomYPosition => sprite.position.y + spriteHeight / 2;
-  double get spriteHeight => sprite.size.y;
-  double get spriteWidth => sprite.size.x;
+  double get bottomYPosition => position.y + spriteHeight / 2;
+  double get spriteHeight => size.y;
+  double get spriteWidth => size.x;
 }

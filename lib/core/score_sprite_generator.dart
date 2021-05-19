@@ -41,16 +41,14 @@ class ScoreSpriteGenerator {
           ScoreElement(scoreElementImage, _defaultScoreElementSize);
 
       final xPosition = _defaultPosition.x -
-          ((scoreElement.spriteToCollisionRect().width * element.key) -
-              (scoreElement.spriteToCollisionRect().width / 2) *
-                  (scoreLength - 1));
+          ((scoreElement.toRect().width / 2) * (scoreLength - 1));
 
       final yPosition = customYPosition ?? _defaultPosition.y;
 
-      scoreElement.sprite.position = Vector2(xPosition, yPosition);
+      scoreElement.position = Vector2(xPosition, yPosition);
 
-      _displayerScoreStream.sink.add(scoreElement.sprite);
-      return scoreElement.sprite;
+      _displayerScoreStream.sink.add(scoreElement);
+      return scoreElement;
     }).toList());
   }
 

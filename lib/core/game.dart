@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flame/effects.dart';
+import 'package:flame/parallax.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/gestures.dart';
 import 'package:flame/components.dart' hide Timer;
@@ -49,7 +50,8 @@ class FlappyGame extends BaseGame with TapDetector {
 
     // Loading all game images
     final blanchonImage = await images.load('blanchon.png');
-    final bgImage = await images.load('bg.png');
+    final bgParallaxImage = await loadParallaxImage('bg.png',
+        alignment: Alignment.bottomCenter, fill: LayerFill.height);
     final groundImage = await images.load('ground.png');
     final topPipeImage = await images.load('top-pipe.png');
     final bottomPipeImage = await images.load('bottom-pipe.png');
@@ -88,17 +90,17 @@ class FlappyGame extends BaseGame with TapDetector {
 
     // Init components
     _bird = Bird(blanchonImage, blanchonSize, blanchonPosition);
-    _bg = Bg(bgImage, Vector2(size.x, size.y));
-    _ground = Ground(
-        groundImage, Vector2(size.x, 150), Vector2(0, (size.y - (size.y / 6))));
     _gameOver = GameOver(gameOverImage, Vector2((size.x / 3) * 2, size.y / 12),
         Vector2(size.x / 2, size.y / 10));
     _scoreBoard = ScoreBoard(scoreBoardImage, Vector2(size.x, size.x),
         Vector2(size.x / 2, size.y / 2));
+    _bg = Bg(bgParallaxImage, size);
+    _ground = Ground(
+        groundImage, Vector2(size.x, 150), Vector2(0, (size.y - (size.y / 6))));
 
-    add(_bg.getSprite);
-    add(_ground.getSprite);
-    add(_bird.getSprite);
+    add(_bg);
+    add(_ground);
+    add(_bird);
 
     _bird.staggingAnimation();
 
@@ -130,23 +132,25 @@ class FlappyGame extends BaseGame with TapDetector {
     gameState = GameState.Playing;
     getPipes();
     _updateDisplayedScore(_score);
-    _bird.sprite.clearEffects();
+    _bird.clearEffects();
     _isTaped = true;
   }
 
   void _startStagging() {
     gameState = GameState.Stagging;
 
+    _bg.restartMovement();
+
     _bird.reloadDefaultPosition();
     _bird.staggingAnimation();
 
-    removeAll(_pipeGenerator.getPipesSprites);
+    removeAll(_pipeGenerator.getPipes);
     _pipeGenerator.cleanUpPipes();
     _score = 0;
     removeAll(_scoreDisplayer.scoreElementSprites);
 
-    remove(_gameOver.sprite);
-    remove(_scoreBoard.sprite);
+    remove(_gameOver);
+    remove(_scoreBoard);
   }
 
   @override
@@ -177,10 +181,10 @@ class FlappyGame extends BaseGame with TapDetector {
   bool _isBlanchonHitingPipes() {
     var isCollision = false;
     final pipesSprite = _pipeGenerator.getPipes;
-    final blanchonRect = _bird.spriteToCollisionRect();
+    final blanchonRect = _bird.toRect();
 
     for (final pipeSprite in pipesSprite) {
-      final pipeRect = pipeSprite.spriteToCollisionRect();
+      final pipeRect = pipeSprite.toRect();
 
       if (_isRectCollision(blanchonRect, pipeRect)) {
         isCollision = true;
@@ -191,22 +195,21 @@ class FlappyGame extends BaseGame with TapDetector {
     return isCollision;
   }
 
-  bool _isRectCollision(Rect rect1, Rect rect2) =>
-      (rect1.left < rect2.right + rect1.size.width / 2 &&
-          rect1.right > rect2.left + rect1.size.width / 2 &&
-          rect1.top < rect2.bottom + rect1.size.height / 2 &&
-          rect1.bottom > rect2.top + rect1.size.height / 2);
+  bool _isRectCollision(Rect rect1, Rect rect2) => (rect1.left < rect2.right &&
+      rect1.right > rect2.left &&
+      rect1.top < rect2.bottom &&
+      rect1.bottom > rect2.top);
 
   void _updateScore() {
     final pipes = _pipeGenerator.getPipes;
-    final blanchonRect = _bird.spriteToCollisionRect();
+    final blanchonRect = _bird.toRect();
 
     // we check if pipe is a top pipe because we only want to update score
     // if blanchon pass 2 pipe (bottom-pipe and top-pipe), so we remove bottom from this equation
     pipes.forEach((pipe) {
       if (!pipe.isBlanchonBehing &&
           pipe.isATopPipe &&
-          blanchonRect.left > pipe.spriteToCollisionRect().right) {
+          blanchonRect.left > pipe.toRect().right) {
         pipe.blanchonPassThePipe();
         _score++;
         _updateDisplayedScore(_score);
@@ -234,17 +237,19 @@ class FlappyGame extends BaseGame with TapDetector {
     _isStaggingReady = false;
     gameState = GameState.DeadMenu;
 
-    final deathBlanchonYPosition = _ground.topYPosition - _bird.sprite.size.y;
+    _bg.stopMovement();
+
+    final deathBlanchonYPosition = _ground.topYPosition - _bird.size.y;
     _bird.die(deathBlanchonYPosition);
 
     _pipesSubscription.cancel();
 
     removeAll(_scoreDisplayer.scoreElementSprites);
-    _updateEndGameDisplayedScore();
     _updateBestScore();
+    _updateEndGameDisplayedScore();
 
-    add(_gameOver.sprite);
-    add(_scoreBoard.sprite);
+    add(_gameOver);
+    add(_scoreBoard);
 
     Timer(Duration(seconds: 1), () {
       _isStaggingReady = true;

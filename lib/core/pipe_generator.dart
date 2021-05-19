@@ -52,8 +52,8 @@ class PipeGenerator {
 
       _pipes.addAll([topPipe, bottomPipe]);
 
-      controller.add(topPipe.getSprite);
-      controller.add(bottomPipe.getSprite);
+      controller.add(topPipe);
+      controller.add(bottomPipe);
     }
 
     void stopTimer() {
@@ -80,8 +80,8 @@ class PipeGenerator {
 
   void updatePipes() {
     final newPipes = _pipes.map((pipe) {
-      if (pipe.getSprite.position.x + pipe.getSprite.size.x > 0) {
-        pipe.getSprite.position.x -= 2;
+      if (pipe.position.x + pipe.size.x > 0) {
+        pipe.position.x -= 2;
         return pipe;
       }
     }).toList();
@@ -106,9 +106,6 @@ class PipeGenerator {
   }
 
   List<Pipe> get getPipes => _pipes;
-
-  List<SpriteComponent> get getPipesSprites =>
-      _pipes.map((pipe) => pipe.sprite).toList();
 }
 
 class PipesHeight {

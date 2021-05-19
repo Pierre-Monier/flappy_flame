@@ -5,12 +5,9 @@ import 'package:flame/effects.dart';
 import './game_component.dart';
 import 'package:flame/game.dart';
 
-class Ground extends GameComponent {
-  // https://flame-engine.org/docs/#/components?id=parallaxcomponent
-  // https://examples.flame-engine.org/#/Parallax_Basic
-  Ground(Image image, Vector2 size, Vector2 position) {
-    sprite = SpriteComponent.fromImage(image, size: size, position: position);
-  }
+class Ground extends SpriteComponent {
+  Ground(Image image, Vector2 size, Vector2 position)
+      : super(sprite: Sprite(image), position: position, size: size);
 
-  double get topYPosition => sprite.position.y;
+  double get topYPosition => position.y;
 }
