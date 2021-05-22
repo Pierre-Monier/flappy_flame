@@ -49,7 +49,11 @@ class FlappyGame extends BaseGame with TapDetector {
     final blanchonPosition = Vector2((size.x / 2), (size.y / 2));
 
     // Loading all game images
-    final blanchonImage = await images.load('blanchon.png');
+    final birdImage1 = await Sprite.load('bird_1.png');
+    final birdImage2 = await Sprite.load('bird_2.png');
+    final birdImage3 = await Sprite.load('bird_3.png');
+    final birdImages = [birdImage1, birdImage2, birdImage3];
+    final birdAnimation = SpriteAnimation.spriteList(birdImages, stepTime: 0.2);
     final bgParallaxImage = await loadParallaxImage('bg.png',
         alignment: Alignment.bottomCenter, fill: LayerFill.height);
     final groundImage = await images.load('ground.png');
@@ -89,7 +93,7 @@ class FlappyGame extends BaseGame with TapDetector {
         Vector2((size.x / 2), size.y / 10), scoreElementImages);
 
     // Init components
-    _bird = Bird(blanchonImage, blanchonSize, blanchonPosition);
+    _bird = Bird(birdAnimation, blanchonSize, blanchonPosition);
     _gameOver = GameOver(gameOverImage, Vector2((size.x / 3) * 2, size.y / 12),
         Vector2(size.x / 2, size.y / 10));
     _scoreBoard = ScoreBoard(scoreBoardImage, Vector2(size.x, size.x),

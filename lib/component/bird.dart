@@ -1,13 +1,12 @@
-import 'dart:ui';
 import 'dart:async';
 import 'dart:math';
 import 'package:flame/components.dart' hide Timer;
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/animation.dart';
-import 'priority_sprite_component.dart';
+import 'priority_sprite_animation_component.dart';
 
-class Bird extends PrioritySpriteComponent {
+class Bird extends PrioritySpriteAnimationComponent {
   Vector2 _defaultPosition;
   bool _isFluttering;
   Timer _currentFlutteringTimer;
@@ -15,8 +14,8 @@ class Bird extends PrioritySpriteComponent {
   static const FLUTTERING_DELAY = 250;
   static const STAGGING_ANIMATION_DELAY = 750;
 
-  Bird(Image image, Vector2 size, Vector2 position)
-      : super(1, image, size: size, position: position) {
+  Bird(SpriteAnimation birdAnimation, Vector2 size, Vector2 position)
+      : super(1, birdAnimation, size: size, position: position) {
     _isFluttering = false;
     // we create a new Vector2 to avoid object reference issues
     _defaultPosition = Vector2(position.x, position.y);
@@ -73,13 +72,14 @@ class Bird extends PrioritySpriteComponent {
         path: [Vector2(position.x, groundTopPosition + spriteHeight / 2)],
         duration: 0.5);
 
-    // It might be optional if it looks weird with blanchon rotation
-    final funkyRotation =
+    final deadRotation =
         RotateEffect(angle: pi / 2, duration: 0.5, curve: Curves.linear);
 
-    final combination = CombinedEffect(effects: [moveToGround, funkyRotation]);
+    final combination = CombinedEffect(effects: [moveToGround, deadRotation]);
 
     addEffect(combination);
+
+    _stopAnimation();
   }
 
   void staggingAnimation() {
@@ -94,12 +94,24 @@ class Bird extends PrioritySpriteComponent {
         isInfinite: true);
 
     addEffect(staggingEffect);
+
+    _resetAnimation();
   }
 
   void _clearFlutteringTimer() {
     if (_currentFlutteringTimer != null) {
       _currentFlutteringTimer.cancel();
     }
+  }
+
+  void _stopAnimation() {
+    animation.loop = false;
+    animation.done();
+  }
+
+  void _resetAnimation() {
+    animation.loop = true;
+    animation.reset();
   }
 
   double get bottomYPosition => position.y + spriteHeight / 2;

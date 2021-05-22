@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-
 import 'dart:ui';
 
 class PrioritySpriteComponent extends SpriteComponent {
