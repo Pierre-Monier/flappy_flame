@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flame_audio/flame_audio.dart';
 import '../component/index.dart';
 import './pipe_generator.dart';
 import './score_sprite_generator.dart';
@@ -16,7 +17,7 @@ import './score_sprite_generator.dart';
 enum GameState { Playing, Stagging, DeadMenu }
 
 class FlappyGame extends BaseGame with TapDetector {
-  static const BOX_KEY = 'flappy_blanchon';
+  static const BOX_KEY = 'flappy_flame';
   static const BEST_SCORE_KEY = 'best_score';
   GameState gameState = GameState.Stagging;
   Bird _bird;
@@ -46,6 +47,9 @@ class FlappyGame extends BaseGame with TapDetector {
     final topPipePosition = Vector2(size.x, 0);
     final bottomPipePosition = Vector2(size.x, (size.y - (size.y / 6)));
     final blanchonPosition = Vector2((size.x / 2), (size.y / 2));
+
+    // Loading audio files
+    await FlameAudio.audioCache.loadAll(['hit.mp3', 'flap.mp3']);
 
     // Loading all game images
     final birdImage1 = await Sprite.load('bird_1.png');
@@ -116,9 +120,11 @@ class FlappyGame extends BaseGame with TapDetector {
   void onTapDown(TapDownDetails details) {
     switch (gameState) {
       case GameState.Playing:
+        FlameAudio.play('flap.mp3');
         _isTaped = true;
         break;
       case GameState.Stagging:
+        FlameAudio.play('flap.mp3');
         _startGame();
         break;
       case GameState.DeadMenu:
@@ -241,6 +247,8 @@ class FlappyGame extends BaseGame with TapDetector {
     gameState = GameState.DeadMenu;
 
     _bg.stopMovement();
+
+    FlameAudio.play('hit.mp3');
 
     final deathBlanchonYPosition = _ground.topYPosition - _bird.size.y;
     _bird.die(deathBlanchonYPosition);

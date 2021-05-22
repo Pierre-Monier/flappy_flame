@@ -26,6 +26,7 @@ dependencies:
 
   flame: ^1.0.0-rc5
   flame_splash_screen: ^0.0.1
+  flame_audio: ^0.1.0-rc5
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.0
@@ -67,3 +68,5 @@ flutter:
     - ./assets/images/9.png
     - ./assets/images/game_over.png
     - ./assets/images/score_board.png
+    - ./assets/audio/flap.mp3
+    - ./assets/audio/hit.mp3
