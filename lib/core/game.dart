@@ -28,7 +28,6 @@ class FlappyGame extends BaseGame with TapDetector {
   PipeGenerator _pipeGenerator;
   StreamSubscription<SpriteComponent> _pipesSubscription;
   int _score;
-  // TODO create a BoxWrapper class
   Box _hiveBox;
   bool _isTaped;
   bool _isStaggingReady;
@@ -280,7 +279,6 @@ class FlappyGame extends BaseGame with TapDetector {
     });
   }
 
-  // TODO refacto in BoxWrapper
   int _getBestScore() {
     if (_hiveBox != null) {
       final bestScore = _hiveBox.get(BEST_SCORE_KEY) as int;

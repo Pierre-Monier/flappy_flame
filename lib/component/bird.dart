@@ -54,16 +54,22 @@ class Bird extends PrioritySpriteAnimationComponent {
   void fall() {
     if (!_isFluttering) {
       final moveDown = MoveEffect(
-          path: [Vector2(position.x, (position.y + 85))],
-          duration: FLUTTERING_DELAY / 1000,
-          curve: Curves.linear);
+        path: [Vector2(position.x, (position.y + 85))],
+        duration: FLUTTERING_DELAY / 1000,
+      );
 
       final rotateDown = RotateEffect(
-          angle: (pi / 2), duration: 0.25, curve: Curves.bounceInOut);
+          angle: (pi / 2),
+          duration: FLUTTERING_DELAY / 10000,
+          curve: Curves.easeInExpo);
 
-      final fallEffect = CombinedEffect(effects: [moveDown, rotateDown]);
+      addEffect(moveDown);
 
-      addEffect(fallEffect);
+      Timer(Duration(milliseconds: FLUTTERING_DELAY), () {
+        if (!_isFluttering) {
+          addEffect(rotateDown);
+        }
+      });
     }
   }
 
