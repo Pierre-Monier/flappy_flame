@@ -41,7 +41,8 @@ class ScoreSpriteGenerator {
           ScoreElement(scoreElementImage, _defaultScoreElementSize);
 
       final xPosition = _defaultPosition.x -
-          ((scoreElement.toRect().width / 2) * (scoreLength - 1));
+          ((scoreElement.toRect().width * element.key) -
+              (scoreElement.toRect().width / 2) * (scoreLength - 1));
 
       final yPosition = customYPosition ?? _defaultPosition.y;
 
