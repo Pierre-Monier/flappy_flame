@@ -3,7 +3,8 @@
 
 A Flappy Bird clone made with [flame](https://github.com/flame-engine/flame)
 
-![demo](./demo.gif)
+![demo](./demo_1.gif)
+![demo](./demo_2.gif)
 
 ## Contributing
 
